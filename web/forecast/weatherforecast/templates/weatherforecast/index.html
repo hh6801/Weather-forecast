@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        body {
+            background-color: rgb(228, 228, 228);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        form {
+            background-color: white;
+            padding: 10px;
+        }
+
+        .table {
+            background-color: white;
+        }
+
+        tr>td {
+            border: 1px solid black;
+        }
+
+        .footer {
+            width: 100%;
+            color: white;
+            text-align: center;
+            font-size: 1.2rem;
+            padding: 10px;
+            background-color: rgb(37 79 106);
+        }
+
+        .container {
+            margin-top: 10px;
+            flex: 1;
+        }
+
+        .inner-container {
+            box-shadow: 1px 1px 1px rgba(9, 30, 66, 0.25), 0px 0px 1px 1px rgba(9, 30, 66, 0.13);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Weather forecast</h1>
+        <div class="inner-container">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="n-predict">Number of days to predict:</label>
+                    <input type="number" class="form-control" id="n-predict" value={{ n_day }} min="1" max="70" name="n-predict">
+                    <label for="features" style="margin-top: 10px;">Choose a features:</label>
+                    <select name="features" id="features">
+                        <option value="Max Temp">Max Temp</option>
+                        <option value="Avg Temp">Avg Temp</option>
+                        <option value="Min Temp">Min Temp</option>
+                        <option value="Max Dew Point">Max Dew Point</option>
+                        <option value="Avg Dew Point">Avg Dew Point</option>
+                        <option value="Min Dew Point">Min Dew Point</option>
+                    </select>
+                    <label for="models" style="margin-top: 10px;">Choose a models:</label>
+                    <select name="models" id="models">
+                        <option value="Bi_LSTM.h5">Bi LSTM</option>
+                        <option value="LSTM.h5">LSTM</option>
+                        <option value="svr_model.pkl">SVR</option>
+                    </select>
+                </div>
+
+                <button type="submit" name="submit-process" class="btn btn-primary">Submit</button>
+                
+            </form>
+            <table class="table table-bordered  ">
+                <thead>
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">{{target}} (° C)</th>
+                        <!-- <th scope="col">Max Temperature (° C)</th> -->
+                        <!-- <th scope="col">Average Temperature (° C)</th>
+                        <th scope="col">Min Temperature (° C)</th>
+                        <th scope="col">Max Dew Point (° C)</th>
+                        <th scope="col">Average Dew Point (° C)</th>
+                        <th scope="col">Max Dew Point (° C)</th> -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in predict %}
+                    <tr>
+                        <td>{{ i.date }}</td>
+                        <td>{{ i.maxTemp }} ° C</td>
+                        <!-- <td>{{ i.avgTemp }} ° C</td>
+                        <td>{{ i.minTemp }} ° C</td>
+                        <td>{{ i.maxDewPoint }} ° C</td>
+                        <td>{{ i.avgDewPoint }} ° C</td>
+                        <td>{{ i.minDewPoint }} ° C</td> -->
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if predict|length > 3 %}
+        <div id="chart" style="width: 100%;">
+
+        </div>
+        {% endif %}
+    </div>
+    <div class="footer">
+        <div class="name">
+            <span>Vũ Trung Hậu - 51900738</span><br>
+            <span>Nguyễn Hữu Hòa - 51900742</span>
+        </div>
+    </div>
+    <script>
+        var options = {
+            series: [
+                {
+                    name: '{{ target }}',
+                    data: JSON.parse('{{ data|escapejs }}').map(({ maxTemp }) => maxTemp)
+                }
+            ],
+            chart: {
+                height: 350,
+                type: 'line',
+                zoom: {
+                    enabled: false
+                }
+            },
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'straight'
+            },
+            title: {
+                text: 'Model Prediction',
+                align: 'left'
+            },
+            grid: {
+                row: {
+                    colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
+                    opacity: 0.5
+                },
+            },
+            xaxis: {
+                categories: JSON.parse('{{ data|escapejs }}').map(({ date }) => date),
+            },
+        };
+
+        var chart = new ApexCharts(document.querySelector("#chart"), options);
+        chart.render();
+    </script>
+</body>
